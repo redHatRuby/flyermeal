@@ -1,0 +1,32 @@
+# FlyerMeal - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Web framework
+flask==3.0.0
+flask-cors==4.0.0
+flask-sqlalchemy==3.1.1
+
+# Password hashing
+werkzeug==3.0.1
+
+# PDF parsing (for flyer scanning)
+pdfplumber==0.10.3
+pypdf==4.0.1
+
+# Image processing (for image-based flyers)
+Pillow==10.2.0
+
+# Database (SQLite built-in, this adds migrations later)
+alembic==1.13.1
+
+# Environment variables
+python-dotenv==1.0.0
+
+# HTTP requests (for fetching online flyers)
+requests==2.31.0
+
+# Data handling
+pandas==2.1.4
+
+# Production server (used by Render)
+gunicorn==21.2.0

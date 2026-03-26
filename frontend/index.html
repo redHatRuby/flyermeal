@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlyerMeal — Smart Grocery Planning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- LANDING / AUTH SCREEN -->
+  <div id="auth-screen" class="screen">
+    <div class="auth-layout">
+      <div class="auth-brand">
+        <div class="brand-mark">🛒</div>
+        <h1 class="brand-name">FlyerMeal</h1>
+        <p class="brand-tagline">Weekly meal plans built around<br/><em>this week's best grocery deals.</em></p>
+        <ul class="brand-features">
+          <li>✦ Scans local flyers automatically</li>
+          <li>✦ Plans meals around sales</li>
+          <li>✦ Leftovers built into every week</li>
+          <li>✦ Flags bulk buy opportunities</li>
+        </ul>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="tab-btn active" onclick="showTab('login')">Sign In</button>
+          <button class="tab-btn" onclick="showTab('register')">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="tab-login" class="tab-content active">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="login-email" placeholder="you@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" />
+          </div>
+          <div id="login-error" class="error-msg hidden"></div>
+          <button class="btn-primary" onclick="login()">Sign In</button>
+        </div>
+
+        <!-- Register Form -->
+        <div id="tab-register" class="tab-content">
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" id="reg-name" placeholder="First name" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="reg-email" placeholder="you@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="reg-password" placeholder="Choose a password" />
+          </div>
+          <div id="reg-error" class="error-msg hidden"></div>
+          <button class="btn-primary" onclick="register()">Create Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SCREEN -->
+  <div id="dashboard-screen" class="screen hidden">
+    <nav class="navbar">
+      <span class="nav-brand">🛒 FlyerMeal</span>
+      <div class="nav-links">
+        <a href="pages/meal-plan.html" class="nav-link">Meal Plan</a>
+        <a href="pages/flyers.html" class="nav-link">Flyers</a>
+        <a href="pages/profile.html" class="nav-link">My Profile</a>
+        <button class="btn-logout" onclick="logout()">Sign Out</button>
+      </div>
+    </nav>
+
+    <main class="dashboard">
+      <div class="welcome-banner">
+        <h2>Good to see you, <span id="user-name">there</span>! 👋</h2>
+        <p>Here's your grocery snapshot for this week.</p>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card" onclick="window.location='pages/flyers.html'">
+          <div class="card-icon">📋</div>
+          <h3>Scan Flyers</h3>
+          <p>Upload this week's flyers to find the best deals</p>
+          <span class="card-action">Get started →</span>
+        </div>
+        <div class="card" onclick="window.location='pages/meal-plan.html'">
+          <div class="card-icon">🍽️</div>
+          <h3>Meal Plan</h3>
+          <p>Build your weekly meals around current sales</p>
+          <span class="card-action">Plan this week →</span>
+        </div>
+        <div class="card" onclick="window.location='pages/profile.html'">
+          <div class="card-icon">⚙️</div>
+          <h3>My Profile</h3>
+          <p>Set your preferences, stores, and dislikes</p>
+          <span class="card-action">Update profile →</span>
+        </div>
+      </div>
+
+      <div class="setup-prompt" id="setup-prompt">
+        <p>🚀 <strong>Get started:</strong> First, set up your profile so FlyerMeal knows your preferred stores and food preferences.</p>
+        <a href="pages/profile.html" class="btn-secondary">Set Up Profile</a>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
