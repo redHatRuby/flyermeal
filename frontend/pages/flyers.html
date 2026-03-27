@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DorothyAnn — Flyers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .page-main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .page-header { margin-bottom: 40px; }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      color: var(--bark);
+      margin-bottom: 8px;
+    }
+    .page-header p { color: var(--stone); font-size: 16px; }
+
+    /* --- Upload Card --- */
+    .upload-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--stone-light);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .section-title { font-family: var(--font-display); font-size: 20px; color: var(--bark); margin-bottom: 8px; }
+    .section-subtitle { font-size: 14px; color: var(--stone); margin-bottom: 24px; }
+
+    .upload-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--stone-light);
+      border-radius: var(--radius);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: var(--cream);
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--moss); background: #f0f5f0; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-icon { font-size: 36px; }
+    .upload-zone h3 { font-family: var(--font-display); font-size: 16px; color: var(--bark); }
+    .upload-zone p { font-size: 13px; color: var(--stone); line-height: 1.4; }
+    .upload-zone .file-types {
+      font-size: 11px; color: var(--stone);
+      background: var(--stone-light); padding: 3px 8px; border-radius: 20px;
+    }
+
+    .store-name-row { display: flex; gap: 12px; align-items: flex-end; }
+    .store-name-row .form-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .store-name-row label { font-size: 13px; font-weight: 500; color: var(--stone); text-transform: uppercase; letter-spacing: 0.06em; }
+    .store-name-row input {
+      padding: 12px 16px;
+      border: 1.5px solid var(--stone-light);
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--bark);
+      background: white;
+      transition: border-color 0.2s;
+    }
+    .store-name-row input:focus { outline: none; border-color: var(--moss); }
+
+    /* --- Coming Soon --- */
+    .coming-soon-card {
+      background: white; border-radius: var(--radius-lg);
+      border: 1.5px solid var(--stone-light); padding: 32px;
+      margin-bottom: 32px; opacity: 0.7;
+    }
+    .coming-soon-badge {
+      display: inline-block; background: var(--amber-light); color: white;
+      font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;
+    }
+    .store-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .store-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; background: var(--cream);
+      border: 1.5px solid var(--stone-light); border-radius: 20px;
+      font-size: 13px; color: var(--stone);
+    }
+
+    /* --- Spinner --- */
+    #scan-status {
+      display: none; background: white; border-radius: var(--radius-lg);
+      border: 1.5px solid var(--moss); padding: 32px;
+      margin-bottom: 24px; text-align: center;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--stone-light); border-top-color: var(--moss);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scan-status-title { font-family: var(--font-display); font-size: 18px; color: var(--bark); margin-bottom: 6px; }
+    .scan-status-sub { font-size: 14px; color: var(--stone); }
+
+    /* --- Scan Summary --- */
+    #scan-summary {
+      display: none; background: #f0fdf4; border: 1.5px solid #86efac;
+      border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 24px;
+    }
+    .summary-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .summary-header h3 { font-family: var(--font-display); font-size: 20px; color: #15803d; }
+    .summary-stats { display: flex; gap: 32px; }
+    .summary-stat { display: flex; flex-direction: column; gap: 2px; }
+    .summary-stat .stat-value { font-family: var(--font-display); font-size: 28px; color: var(--moss); font-weight: 700; }
+    .summary-stat .stat-label { font-size: 13px; color: #16a34a; }
+
+    /* --- Flyer List --- */
+    .flyers-list-section { margin-top: 40px; }
+    .flyers-list-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+    .flyers-list-header h2 { font-family: var(--font-display); font-size: 24px; color: var(--bark); }
+    .flyer-count { font-size: 13px; color: var(--stone); }
+
+    .empty-state {
+      background: white; border-radius: var(--radius-lg);
+      border: 1.5px dashed var(--stone-light); padding: 48px 32px;
+      text-align: center; color: var(--stone);
+    }
+    .empty-state p:first-child { font-size: 32px; margin-bottom: 12px; }
+    .empty-state p:last-child { font-size: 15px; }
+
+    .flyer-item {
+      background: white; border-radius: var(--radius);
+      border: 1.5px solid var(--stone-light); padding: 20px 24px;
+      margin-bottom: 12px; display: flex; align-items: center;
+      gap: 20px; transition: all 0.2s; cursor: pointer;
+    }
+    .flyer-item:hover { border-color: var(--moss); transform: translateY(-1px); box-shadow: 0 4px 16px var(--shadow); }
+    .flyer-store-icon {
+      width: 44px; height: 44px; background: var(--cream);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; flex-shrink: 0;
+      border: 1px solid var(--stone-light);
+    }
+    .flyer-info { flex: 1; }
+    .flyer-store-name { font-family: var(--font-display); font-size: 17px; color: var(--bark); margin-bottom: 3px; }
+    .flyer-meta { font-size: 13px; color: var(--stone); }
+    .flyer-stats { display: flex; gap: 20px; text-align: right; }
+    .flyer-stat { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .flyer-stat .val { font-family: var(--font-display); font-size: 20px; color: var(--bark); }
+    .flyer-stat .lbl { font-size: 11px; color: var(--stone); text-transform: uppercase; letter-spacing: 0.05em; }
+    .flyer-chevron { font-size: 18px; color: var(--stone-light); margin-left: 8px; }
+    .bulk-badge {
+      background: #fff8ed; color: var(--amber);
+      border: 1px solid var(--amber-light); border-radius: 6px;
+      padding: 2px 8px; font-size: 11px; font-weight: 500;
+    }
+
+    /* --- Error / Modal helpers --- */
+    .error-msg {
+      background: #fef2f2; color: #dc2626; padding: 12px 16px;
+      border-radius: var(--radius); font-size: 14px;
+      border: 1px solid #fecaca; margin-top: 12px;
+    }
+
+    /* ===== FLYER DETAIL MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(44, 31, 14, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 200;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 40px 16px;
+      overflow-y: auto;
+    }
+
+    .modal-card {
+      background: var(--warm-white);
+      border-radius: var(--radius-lg);
+      width: 100%; max-width: 680px;
+      box-shadow: 0 24px 64px rgba(44,31,14,0.2);
+      overflow: hidden;
+      animation: slideUp 0.2s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      background: var(--moss);
+      padding: 28px 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .modal-header-info h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .modal-header-info p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .modal-close {
+      background: rgba(255,255,255,0.15);
+      border: none; border-radius: 8px;
+      width: 36px; height: 36px;
+      font-size: 18px; color: white;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+    .modal-body { padding: 28px 32px; }
+
+    /* Bulk Deals Section */
+    .bulk-section {
+      background: #fff8ed;
+      border: 1.5px solid var(--amber-light);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+
+    .bulk-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--amber);
+      margin-bottom: 16px;
+    }
+
+    .bulk-deal-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #fde68a;
+    }
+    .bulk-deal-row:last-child { border-bottom: none; }
+
+    .bulk-deal-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--bark);
+      flex: 1;
+    }
+
+    .bulk-deal-note {
+      font-size: 12px;
+      color: var(--amber);
+      margin-top: 2px;
+    }
+
+    .bulk-deal-price {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--amber);
+      white-space: nowrap;
+    }
+
+    /* Items Table */
+    .items-section-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--bark);
+      margin-bottom: 16px;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .items-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--stone);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--stone-light);
+    }
+
+    .items-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--stone-light);
+      color: var(--bark);
+      vertical-align: middle;
+    }
+
+    .items-table tr:last-child td { border-bottom: none; }
+    .items-table tr:hover td { background: var(--cream); }
+
+    .item-price {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--moss);
+      white-space: nowrap;
+    }
+
+    .item-unit { font-size: 12px; color: var(--stone); }
+
+    .category-pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--stone-light);
+      color: var(--stone);
+      text-transform: capitalize;
+    }
+
+    .star-icon { color: var(--amber); font-size: 13px; }
+
+    .modal-loading {
+      text-align: center;
+      padding: 48px;
+      color: var(--stone);
+      font-size: 15px;
+    }
+
+    @media (max-width: 600px) {
+      .upload-options { grid-template-columns: 1fr; }
+      .summary-stats { flex-wrap: wrap; gap: 16px; }
+      .flyer-stats { gap: 12px; }
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal-card { border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-width: 100%; }
+      .modal-header { padding: 20px; }
+      .modal-body { padding: 20px; }
+      .items-table th:nth-child(3) { display: none; }
+      .items-table td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/" class="nav-brand" style="text-decoration:none;">🛒 DorothyAnn</a>
+    <div class="nav-links">
+      <a href="meal-plan.html" class="nav-link">Meal Plan</a>
+      <a href="flyers.html" class="nav-link" style="color: var(--moss);">Flyers</a>
+      <a href="profile.html" class="nav-link">My Profile</a>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="page-header">
+      <h1>Flyers</h1>
+      <p>Upload a flyer and we'll pull out all the deals for your meal plan.</p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="upload-card">
+      <h2 class="section-title">Scan a Flyer</h2>
+      <p class="section-subtitle">Upload a PDF flyer or a photo of a paper flyer from the mail.</p>
+
+      <div class="upload-options">
+        <div class="upload-zone" id="pdf-zone" onclick="document.getElementById('pdf-input').click()"
+             ondragover="handleDragOver(event, 'pdf-zone')"
+             ondragleave="handleDragLeave('pdf-zone')"
+             ondrop="handleDrop(event, 'pdf')">
+          <input type="file" id="pdf-input" accept=".pdf" onchange="handleFileSelect(event, 'pdf')" />
+          <div class="upload-icon">📄</div>
+          <h3>PDF Flyer</h3>
+          <p>Drag & drop or click to select a digital flyer</p>
+          <span class="file-types">PDF</span>
+        </div>
+
+        <div class="upload-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()"
+             ondragover="handleDragOver(event, 'photo-zone')"
+             ondragleave="handleDragLeave('photo-zone')"
+             ondrop="handleDrop(event, 'photo')">
+          <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="handleFileSelect(event, 'photo')" />
+          <div class="upload-icon">📷</div>
+          <h3>Paper Flyer Photo</h3>
+          <p>Take a photo or upload an image of a mail flyer</p>
+          <span class="file-types">JPG · PNG · HEIC</span>
+        </div>
+      </div>
+
+      <div class="store-name-row">
+        <div class="form-group">
+          <label>Store Name <span style="font-size:11px; text-transform:none; letter-spacing:0; color: var(--terracotta);">required</span></label>
+          <input type="text" id="store-name-input" placeholder="e.g. No Frills, FreshCo, Costco" />
+        </div>
+      </div>
+
+      <div id="upload-error" class="error-msg hidden"></div>
+    </div>
+
+    <!-- Scan Status Spinner -->
+    <div id="scan-status">
+      <div class="spinner"></div>
+      <p class="scan-status-title">Scanning your flyer…</p>
+      <p class="scan-status-sub">Extracting deals and prices</p>
+    </div>
+
+    <!-- Scan Summary -->
+    <div id="scan-summary">
+      <div class="summary-header">
+        <span style="font-size:28px;">✅</span>
+        <h3>Flyer scanned successfully!</h3>
+      </div>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <span class="stat-value" id="summary-items">—</span>
+          <span class="stat-label">Items found</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-value" id="summary-bulk">—</span>
+          <span class="stat-label">Bulk buy deals</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-value" id="summary-store">—</span>
+          <span class="stat-label">Store</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coming Soon: Auto-fetch -->
+    <div class="coming-soon-card">
+      <div class="coming-soon-badge">Coming Soon</div>
+      <h2 class="section-title" style="margin-bottom: 4px;">Automatic Flyer Fetching</h2>
+      <p class="section-subtitle" style="margin-bottom: 0;">
+        Tell us your stores and we'll pull their flyers automatically every week — no uploading needed.
+      </p>
+      <div class="store-chips">
+        <div class="store-chip">🏪 No Frills</div>
+        <div class="store-chip">🏪 FreshCo</div>
+        <div class="store-chip">🏪 Costco</div>
+        <div class="store-chip">🏪 Food Basics</div>
+        <div class="store-chip">🏪 Metro</div>
+        <div class="store-chip">🏪 Walmart</div>
+        <div class="store-chip">+ more</div>
+      </div>
+    </div>
+
+    <!-- Scanned Flyers List -->
+    <div class="flyers-list-section">
+      <div class="flyers-list-header">
+        <h2>Scanned Flyers</h2>
+        <span class="flyer-count" id="flyer-count"></span>
+      </div>
+      <div id="flyers-list"></div>
+    </div>
+  </main>
+
+  <!-- Flyer Detail Modal -->
+  <div id="flyer-modal" class="modal-overlay hidden" onclick="handleModalClick(event)">
+    <div class="modal-card" id="modal-card">
+      <div id="modal-content">
+        <div class="modal-loading">Loading flyer details…</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", async () => {
+      const user = await api.get("/auth/me");
+      if (!user.id) { window.location.href = "/"; return; }
+      renderFlyerList();
+    });
+
+    // --- Drag & Drop ---
+    function handleDragOver(e, zoneId) {
+      e.preventDefault();
+      document.getElementById(zoneId).classList.add("dragover");
+    }
+    function handleDragLeave(zoneId) {
+      document.getElementById(zoneId).classList.remove("dragover");
+    }
+    function handleDrop(e, type) {
+      e.preventDefault();
+      const zoneId = type === "pdf" ? "pdf-zone" : "photo-zone";
+      document.getElementById(zoneId).classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file) scanFlyer(file);
+    }
+    function handleFileSelect(e, type) {
+      const file = e.target.files[0];
+      if (file) scanFlyer(file);
+      e.target.value = "";
+    }
+
+    // --- Scan ---
+    async function scanFlyer(file) {
+      const storeName = document.getElementById("store-name-input").value.trim()
+        || guessStoreName(file.name);
+
+      if (!storeName) {
+        showError("Please enter the store name before uploading.");
+        return;
+      }
+
+      hideEl("scan-summary");
+      hideEl("upload-error");
+      showEl("scan-status");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("store_name", storeName);
+
+      try {
+        const res = await fetch(`${API_BASE}/flyers/scan`, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+
+        hideEl("scan-status");
+
+        const data = await res.json();
+        if (data.error) { showError(data.error); return; }
+
+        document.getElementById("summary-items").textContent = data.items ?? "—";
+        document.getElementById("summary-bulk").textContent = data.bulk_deals ?? "—";
+        document.getElementById("summary-store").textContent = data.store;
+        showEl("scan-summary");
+        document.getElementById("store-name-input").value = "";
+
+        renderFlyerList();
+
+      } catch (err) {
+        hideEl("scan-status");
+        showError("Could not connect to the server. Make sure the backend is running.");
+      }
+    }
+
+    function guessStoreName(filename) {
+      const known = ["nofrills", "freshco", "costco", "metro", "walmart", "foodbasics", "sobeys", "loblaws", "lawtons"];
+      const lower = filename.toLowerCase().replace(/[\s_-]/g, "");
+      return known.find(s => lower.includes(s)) ?? "";
+    }
+
+    // --- Flyer List (from API) ---
+    async function renderFlyerList() {
+      const listEl = document.getElementById("flyers-list");
+      const countEl = document.getElementById("flyer-count");
+
+      const scans = await api.get("/flyers");
+      if (scans.error || !scans.length) {
+        countEl.textContent = "";
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <p>📋</p>
+            <p>No flyers scanned yet — upload one above to get started.</p>
+          </div>`;
+        return;
+      }
+
+      countEl.textContent = `${scans.length} flyer${scans.length !== 1 ? "s" : ""}`;
+      listEl.innerHTML = scans.map(s => {
+        const date = new Date(s.scanned_at).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" });
+        const bulkBadge = s.bulk_deal_count ? `<span class="bulk-badge">🏷️ ${s.bulk_deal_count} bulk</span>` : "";
+        return `
+          <div class="flyer-item" onclick="openFlyerDetail(${s.id})">
+            <div class="flyer-store-icon">🏪</div>
+            <div class="flyer-info">
+              <div class="flyer-store-name">${escapeHtml(s.store)} ${bulkBadge}</div>
+              <div class="flyer-meta">Scanned ${date}${s.flyer_date ? " · " + escapeHtml(s.flyer_date) : ""}</div>
+            </div>
+            <div class="flyer-stats">
+              <div class="flyer-stat">
+                <span class="val">${s.item_count}</span>
+                <span class="lbl">Items</span>
+              </div>
+              <div class="flyer-stat">
+                <span class="val">${s.bulk_deal_count}</span>
+                <span class="lbl">Bulk</span>
+              </div>
+            </div>
+            <span class="flyer-chevron">›</span>
+          </div>`;
+      }).join("");
+    }
+
+    // --- Flyer Detail Modal ---
+    async function openFlyerDetail(scanId) {
+      const modal = document.getElementById("flyer-modal");
+      document.getElementById("modal-content").innerHTML = `<div class="modal-loading"><div class="spinner" style="margin:0 auto 12px;"></div>Loading…</div>`;
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+
+      const scan = await api.get(`/flyers/${scanId}`);
+      if (scan.error) {
+        document.getElementById("modal-content").innerHTML = `<div class="modal-loading">Could not load flyer details.</div>`;
+        return;
+      }
+
+      const scannedDate = new Date(scan.scanned_at).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" });
+      const bulkDeals = scan.bulk_deals || [];
+      const items = scan.items || [];
+
+      // Sort items: bulk buys first, then by category
+      items.sort((a, b) => {
+        if (a.bulk_buy && !b.bulk_buy) return -1;
+        if (!a.bulk_buy && b.bulk_buy) return 1;
+        return (a.category || "").localeCompare(b.category || "");
+      });
+
+      const bulkHtml = bulkDeals.length ? `
+        <div class="bulk-section">
+          <div class="bulk-section-title">🏷️ Bulk Buy Deals</div>
+          ${bulkDeals.map(b => `
+            <div class="bulk-deal-row">
+              <div>
+                <div class="bulk-deal-name">${escapeHtml(b.name)}</div>
+                ${b.note ? `<div class="bulk-deal-note">${escapeHtml(b.note)}</div>` : ""}
+              </div>
+              <div class="bulk-deal-price">$${b.price} <span style="font-size:12px;color:var(--amber);">${escapeHtml(b.unit || "")}</span></div>
+            </div>`).join("")}
+        </div>` : "";
+
+      const itemsHtml = `
+        <div class="items-section-title">All Items (${items.length})</div>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Unit</th>
+              <th style="text-align:right;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr>
+                <td>${item.bulk_buy ? '<span class="star-icon">★ </span>' : ""}${escapeHtml(item.name)}</td>
+                <td><span class="category-pill">${escapeHtml(item.category || "other")}</span></td>
+                <td class="item-unit">${escapeHtml(item.unit || "")}</td>
+                <td style="text-align:right;" class="item-price">$${item.price ?? "—"}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+      document.getElementById("modal-content").innerHTML = `
+        <div class="modal-header">
+          <div class="modal-header-info">
+            <h2>${escapeHtml(scan.store)}</h2>
+            <p>${scan.flyer_date ? escapeHtml(scan.flyer_date) + " · " : ""}Scanned ${scannedDate}</p>
+          </div>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          ${bulkHtml}
+          ${itemsHtml}
+        </div>`;
+    }
+
+    function closeModal() {
+      document.getElementById("flyer-modal").classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+
+    function handleModalClick(e) {
+      if (e.target === document.getElementById("flyer-modal")) closeModal();
+    }
+
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+    // --- Helpers ---
+    function showEl(id) { document.getElementById(id).style.display = "block"; }
+    function hideEl(id) { document.getElementById(id).style.display = "none"; }
+
+    function showError(msg) {
+      const el = document.getElementById("upload-error");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    async function logout() {
+      await api.post("/auth/logout", {});
+      window.location.href = "/";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DorothyAnn — My Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .page-main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      color: var(--bark);
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--stone);
+      font-size: 16px;
+    }
+
+    .profile-section {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--stone-light);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--bark);
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--stone-light);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full-width { grid-column: 1 / -1; }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--stone);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .form-group input[type="number"],
+    .form-group input[type="text"],
+    .form-group select {
+      padding: 12px 16px;
+      border: 1.5px solid var(--stone-light);
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--bark);
+      background: white;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--moss);
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: var(--stone);
+      margin-top: 2px;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--bark);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--moss);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .toggle-label {
+      font-size: 15px;
+      color: var(--bark);
+    }
+
+    .toggle-label span {
+      display: block;
+      font-size: 13px;
+      color: var(--stone);
+      margin-top: 2px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--stone-light);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--moss); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .success-msg {
+      background: #f0fdf4;
+      color: #16a34a;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      border: 1px solid #bbf7d0;
+    }
+
+    .error-msg {
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      border: 1px solid #fecaca;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/" class="nav-brand" style="text-decoration:none;">🛒 DorothyAnn</a>
+    <div class="nav-links">
+      <a href="meal-plan.html" class="nav-link">Meal Plan</a>
+      <a href="flyers.html" class="nav-link">Flyers</a>
+      <a href="profile.html" class="nav-link" style="color: var(--moss);">My Profile</a>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="page-header">
+      <h1>My Profile</h1>
+      <p>Tell DorothyAnn about your household so we can plan meals around deals you'll actually use.</p>
+    </div>
+
+    <!-- Household -->
+    <div class="profile-section">
+      <h2 class="section-title">Household</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Household Size</label>
+          <input type="number" id="household-size" min="1" max="20" value="1" />
+        </div>
+        <div class="form-group">
+          <label>Cooking Skill</label>
+          <select id="cooking-skill">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate" selected>Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Weekly Budget (CAD)</label>
+          <input type="number" id="budget" min="0" step="10" placeholder="e.g. 150" />
+        </div>
+        <div class="form-group" style="justify-content: flex-end; padding-bottom: 2px;">
+          <label>Leftover-Friendly Meals</label>
+          <div class="toggle-row" style="margin-top: 10px;">
+            <span class="toggle-label" style="font-size:14px; color: var(--stone);">Plan meals that make good leftovers</span>
+            <label class="toggle">
+              <input type="checkbox" id="leftover-friendly" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dietary Restrictions -->
+    <div class="profile-section">
+      <h2 class="section-title">Dietary Restrictions</h2>
+      <div class="checkbox-grid">
+        <label class="checkbox-item"><input type="checkbox" value="vegetarian" /> Vegetarian</label>
+        <label class="checkbox-item"><input type="checkbox" value="vegan" /> Vegan</label>
+        <label class="checkbox-item"><input type="checkbox" value="gluten-free" /> Gluten-Free</label>
+        <label class="checkbox-item"><input type="checkbox" value="dairy-free" /> Dairy-Free</label>
+        <label class="checkbox-item"><input type="checkbox" value="nut-free" /> Nut-Free</label>
+        <label class="checkbox-item"><input type="checkbox" value="halal" /> Halal</label>
+        <label class="checkbox-item"><input type="checkbox" value="kosher" /> Kosher</label>
+        <label class="checkbox-item"><input type="checkbox" value="low-sodium" /> Low Sodium</label>
+      </div>
+    </div>
+
+    <!-- Food Preferences -->
+    <div class="profile-section">
+      <h2 class="section-title">Food Preferences</h2>
+      <div class="form-group">
+        <label>Disliked Foods</label>
+        <input type="text" id="disliked-foods" placeholder="e.g. mushrooms, olives, blue cheese" />
+        <p class="input-hint">Separate items with commas. These ingredients will be avoided in meal plans.</p>
+      </div>
+    </div>
+
+    <!-- Shopping -->
+    <div class="profile-section">
+      <h2 class="section-title">Shopping</h2>
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div class="toggle-row">
+          <div class="toggle-label">
+            Shop Online
+            <span>Include stores that offer online ordering or delivery</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="shop-online" checked onchange="toggleWalkDistance()" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div id="walk-distance-group" class="form-group" style="display: none;">
+          <label>Max Walking Distance (km)</label>
+          <input type="number" id="max-walk" min="0" max="50" step="0.5" value="2" />
+          <p class="input-hint">Only stores within this distance will be considered for in-store shopping.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Preferred Stores</label>
+          <input type="text" id="preferred-stores" placeholder="e.g. No Frills, Costco, FreshCo" />
+          <p class="input-hint">Separate store names with commas. Flyers from these stores are prioritised.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Excluded Stores</label>
+          <input type="text" id="excluded-stores" placeholder="e.g. Whole Foods" />
+          <p class="input-hint">Flyers from these stores will be ignored.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-primary" onclick="saveProfile()" style="width: auto; padding: 14px 32px;">Save Profile</button>
+      <div id="status-msg" class="hidden"></div>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // Redirect to home if not logged in
+    window.addEventListener("DOMContentLoaded", async () => {
+      const user = await api.get("/auth/me");
+      if (!user.id) {
+        window.location.href = "/";
+        return;
+      }
+      loadProfile();
+    });
+
+    function toggleWalkDistance() {
+      const online = document.getElementById("shop-online").checked;
+      document.getElementById("walk-distance-group").style.display = online ? "none" : "block";
+    }
+
+    async function loadProfile() {
+      const data = await api.get("/profile");
+      if (data.error) return; // no profile yet, leave defaults
+
+      document.getElementById("household-size").value = data.household_size ?? 1;
+      document.getElementById("cooking-skill").value = data.cooking_skill ?? "intermediate";
+      document.getElementById("budget").value = data.budget_per_week ?? "";
+      document.getElementById("leftover-friendly").checked = data.leftover_friendly ?? true;
+      document.getElementById("shop-online").checked = data.shop_online ?? true;
+      document.getElementById("max-walk").value = data.max_walk_km ?? 2;
+      document.getElementById("preferred-stores").value = (data.preferred_stores ?? []).join(", ");
+      document.getElementById("excluded-stores").value = (data.excluded_stores ?? []).join(", ");
+      document.getElementById("disliked-foods").value = (data.disliked_foods ?? []).join(", ");
+
+      // Tick dietary restriction checkboxes
+      const restrictions = data.dietary_restrictions ?? [];
+      document.querySelectorAll(".checkbox-grid input[type=checkbox]").forEach(cb => {
+        cb.checked = restrictions.includes(cb.value);
+      });
+
+      toggleWalkDistance();
+    }
+
+    function splitTags(str) {
+      return str.split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    async function saveProfile() {
+      const restrictions = [...document.querySelectorAll(".checkbox-grid input[type=checkbox]")]
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+
+      const payload = {
+        household_size: parseInt(document.getElementById("household-size").value) || 1,
+        cooking_skill: document.getElementById("cooking-skill").value,
+        budget_per_week: parseFloat(document.getElementById("budget").value) || null,
+        leftover_friendly: document.getElementById("leftover-friendly").checked,
+        shop_online: document.getElementById("shop-online").checked,
+        max_walk_km: parseFloat(document.getElementById("max-walk").value) || 2,
+        preferred_stores: splitTags(document.getElementById("preferred-stores").value),
+        excluded_stores: splitTags(document.getElementById("excluded-stores").value),
+        disliked_foods: splitTags(document.getElementById("disliked-foods").value),
+        dietary_restrictions: restrictions,
+      };
+
+      const data = await api.put("/profile", payload);
+      const statusEl = document.getElementById("status-msg");
+      statusEl.classList.remove("hidden", "success-msg", "error-msg");
+
+      if (data.error) {
+        statusEl.className = "error-msg";
+        statusEl.textContent = data.error;
+      } else {
+        statusEl.className = "success-msg";
+        statusEl.textContent = "Profile saved!";
+        setTimeout(() => statusEl.classList.add("hidden"), 3000);
+      }
+    }
+
+    async function logout() {
+      await api.post("/auth/logout", {});
+      window.location.href = "/";
+    }
+  </script>
+</body>
+</html>

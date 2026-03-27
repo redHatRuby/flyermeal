@@ -1,5 +1,5 @@
 /**
- * FlyerMeal — Main App Logic
+ * DorothyAnn — Main App Logic
  * Handles login, register, logout, and screen switching.
  */
 

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DorothyAnn — Meal Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .page-main {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* --- Page Header --- */
+    .plan-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .plan-header h1 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      color: var(--bark);
+      margin-bottom: 8px;
+    }
+
+    .plan-header p { color: var(--stone); font-size: 16px; }
+
+    .generate-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: var(--moss);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .generate-btn:hover { background: var(--moss-light); }
+    .generate-btn:active { transform: scale(0.99); }
+    .generate-btn:disabled { background: var(--stone); cursor: not-allowed; transform: none; }
+
+    /* --- Empty State --- */
+    .empty-state {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1.5px dashed var(--stone-light);
+      padding: 64px 32px;
+      text-align: center;
+    }
+
+    .empty-icon { font-size: 56px; margin-bottom: 20px; }
+
+    .empty-state h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      color: var(--bark);
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      color: var(--stone);
+      font-size: 16px;
+      max-width: 420px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    /* --- Loading --- */
+    #plan-loading {
+      display: none;
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--moss);
+      padding: 48px 32px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--stone-light);
+      border-top-color: var(--moss);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--bark);
+      margin-bottom: 8px;
+    }
+
+    .loading-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 20px;
+      text-align: left;
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .loading-steps li {
+      font-size: 14px;
+      color: var(--stone);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .loading-steps li.active { color: var(--moss); font-weight: 500; }
+    .loading-steps li.done { color: var(--stone); }
+    .loading-steps li.done::before { content: "✓"; color: var(--moss); }
+    .loading-steps li.active::before { content: "›"; }
+    .loading-steps li:not(.active):not(.done)::before { content: "·"; }
+
+    /* --- Results wrapper --- */
+    #plan-results { display: none; }
+
+    /* --- Bulk Buy Alerts --- */
+    .bulk-alerts {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .bulk-alert {
+      background: #fff8ed;
+      border: 1.5px solid var(--amber-light);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bulk-alert-icon { font-size: 24px; flex-shrink: 0; }
+
+    .bulk-alert-body { flex: 1; }
+
+    .bulk-alert-title {
+      font-weight: 500;
+      color: var(--bark);
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .bulk-alert-sub { font-size: 13px; color: var(--stone); }
+
+    .bulk-alert-price {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--amber);
+      white-space: nowrap;
+    }
+
+    .bulk-alert-store {
+      font-size: 11px;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* --- Section Header --- */
+    .section-heading {
+      font-family: var(--font-display);
+      font-size: 26px;
+      color: var(--bark);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .section-heading span {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--stone);
+      font-weight: 400;
+    }
+
+    /* --- Weekly Calendar Grid --- */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+
+    .day-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--stone-light);
+      overflow: hidden;
+    }
+
+    .day-header {
+      background: var(--moss);
+      padding: 14px 18px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .day-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: white;
+    }
+
+    .day-date { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+    .meals-list { padding: 4px 0; }
+
+    .meal-slot {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--stone-light);
+      position: relative;
+    }
+
+    .meal-slot:last-child { border-bottom: none; }
+
+    .meal-slot.is-leftover { background: #fefce8; }
+
+    .meal-label {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--stone);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .leftover-badge {
+      background: #fef9c3;
+      color: #a16207;
+      border: 1px solid #fde68a;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .meal-name {
+      font-size: 14px;
+      color: var(--bark);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .sale-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .sale-tag {
+      background: #f0fdf4;
+      color: var(--moss);
+      border: 1px solid #bbf7d0;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    /* --- Shopping List --- */
+    .shopping-list { margin-top: 8px; }
+
+    .store-section {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--stone-light);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .store-header {
+      background: var(--cream);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--stone-light);
+    }
+
+    .store-header-icon { font-size: 20px; }
+
+    .store-header-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--bark);
+      flex: 1;
+    }
+
+    .store-total {
+      font-size: 13px;
+      color: var(--stone);
+    }
+
+    .shopping-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--stone-light);
+    }
+
+    .shopping-item:last-child { border-bottom: none; }
+
+    .shopping-check {
+      width: 18px; height: 18px;
+      accent-color: var(--moss);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .shopping-item-name {
+      flex: 1;
+      font-size: 15px;
+      color: var(--bark);
+    }
+
+    .shopping-item-qty {
+      font-size: 13px;
+      color: var(--stone);
+      margin-right: 8px;
+    }
+
+    .shopping-item-price {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--moss);
+      white-space: nowrap;
+    }
+
+    .no-scans-notice {
+      background: #fff8ed;
+      border: 1.5px solid var(--amber-light);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--bark);
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 600px) {
+      .plan-header { flex-direction: column; }
+      .generate-btn { width: 100%; justify-content: center; }
+      .week-grid { grid-template-columns: 1fr; }
+      .bulk-alert { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/" class="nav-brand" style="text-decoration:none;">🛒 DorothyAnn</a>
+    <div class="nav-links">
+      <a href="meal-plan.html" class="nav-link" style="color: var(--moss);">Meal Plan</a>
+      <a href="flyers.html" class="nav-link">Flyers</a>
+      <a href="profile.html" class="nav-link">My Profile</a>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="page-main">
+
+    <div class="plan-header">
+      <div>
+        <h1>Meal Plan</h1>
+        <p>7 days of meals built around this week's best grocery deals.</p>
+      </div>
+      <button class="generate-btn" id="generate-btn" onclick="generatePlan()">
+        ✨ Generate Meal Plan
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div id="plan-empty">
+      <div class="empty-state">
+        <div class="empty-icon">🍽️</div>
+        <h2>No meal plan yet</h2>
+        <p>Scan a flyer first, then hit Generate — DorothyAnn will build a full week of meals around this week's deals.</p>
+        <a href="flyers.html" class="btn-secondary">Scan a Flyer First</a>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="plan-loading">
+      <div class="spinner"></div>
+      <p class="loading-title">Building your meal plan…</p>
+      <p style="color: var(--stone); font-size: 14px;">This takes about 30 seconds</p>
+      <ul class="loading-steps" id="loading-steps">
+        <li class="active" id="step-1">Reading your scanned flyers</li>
+        <li id="step-2">Checking your profile preferences</li>
+        <li id="step-3">Selecting meals around sale items</li>
+        <li id="step-4">Planning leftovers to reduce waste</li>
+        <li id="step-5">Building your shopping list</li>
+      </ul>
+    </div>
+
+    <!-- Results -->
+    <div id="plan-results">
+
+      <!-- Bulk buy alerts -->
+      <div id="bulk-alerts" class="bulk-alerts"></div>
+
+      <!-- Weekly calendar -->
+      <div class="section-heading">
+        This Week <span id="week-label"></span>
+      </div>
+      <div class="week-grid" id="week-grid"></div>
+
+      <!-- Shopping list -->
+      <div class="section-heading">Shopping List</div>
+      <div class="shopping-list" id="shopping-list"></div>
+
+    </div>
+
+  </main>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let loadingTimer = null;
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const user = await api.get("/auth/me");
+      if (!user.id) { window.location.href = "/"; return; }
+
+      const flyers = await api.get("/flyers");
+      if (!Array.isArray(flyers) || flyers.length === 0) {
+        document.getElementById("generate-btn").disabled = true;
+      } else {
+        hideEl("plan-empty");
+      }
+    });
+
+    // --- Animated loading steps ---
+    function startLoadingAnimation() {
+      const steps = ["step-1","step-2","step-3","step-4","step-5"];
+      let i = 0;
+      loadingTimer = setInterval(() => {
+        if (i > 0) document.getElementById(steps[i-1])?.classList.replace("active","done");
+        if (i < steps.length) document.getElementById(steps[i])?.classList.add("active");
+        i++;
+        if (i >= steps.length) clearInterval(loadingTimer);
+      }, 5000);
+    }
+
+    function stopLoadingAnimation() {
+      clearInterval(loadingTimer);
+    }
+
+    // --- Generate ---
+    async function generatePlan() {
+      const btn = document.getElementById("generate-btn");
+      btn.disabled = true;
+      btn.textContent = "Generating…";
+
+      // Reset loading steps
+      ["step-1","step-2","step-3","step-4","step-5"].forEach(id => {
+        const el = document.getElementById(id);
+        el.className = "";
+      });
+
+      showEl("plan-loading");
+      hideEl("plan-empty");
+      hideEl("plan-results");
+      startLoadingAnimation();
+
+      try {
+        const data = await api.get("/meal-plan");
+        stopLoadingAnimation();
+        hideEl("plan-loading");
+
+        if (data.error) {
+          showEl("plan-empty");
+          alert("Could not generate meal plan: " + data.error);
+          return;
+        }
+
+        // API returns 501 stub — use sample data for preview
+        const plan = (data.message && data.message.includes("coming")) ? getSamplePlan() : data;
+        renderPlan(plan);
+
+      } catch (err) {
+        stopLoadingAnimation();
+        hideEl("plan-loading");
+        showEl("plan-empty");
+        alert("Could not connect to the server.");
+      }
+
+      btn.disabled = false;
+      btn.textContent = "✨ Regenerate";
+    }
+
+    // --- Render ---
+    function renderPlan(plan) {
+      // Bulk buy alerts
+      const alertsEl = document.getElementById("bulk-alerts");
+      const bulkRecs = plan.bulk_buy_recommendations || [];
+      if (bulkRecs.length) {
+        alertsEl.innerHTML = `
+          <div style="font-family:var(--font-display);font-size:20px;color:var(--bark);margin-bottom:12px;">
+            🏷️ Bulk Buy Opportunities This Week
+          </div>
+          ${bulkRecs.map(r => `
+            <div class="bulk-alert">
+              <div class="bulk-alert-icon">📦</div>
+              <div class="bulk-alert-body">
+                <div class="bulk-alert-title">${escapeHtml(r.item)}</div>
+                <div class="bulk-alert-sub">${escapeHtml(r.note || "")}</div>
+                <div class="bulk-alert-store">@ ${escapeHtml(r.store)}</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="bulk-alert-price">$${r.price}</div>
+                <div class="bulk-alert-store">${escapeHtml(r.unit || "")}</div>
+              </div>
+            </div>`).join("")}`;
+      } else {
+        alertsEl.innerHTML = "";
+      }
+
+      // Week label
+      if (plan.week_of) {
+        const d = new Date(plan.week_of);
+        document.getElementById("week-label").textContent =
+          `Week of ${d.toLocaleDateString("en-CA", {month:"long", day:"numeric", year:"numeric"})}`;
+      }
+
+      // Day cards
+      const gridEl = document.getElementById("week-grid");
+      gridEl.innerHTML = (plan.days || []).map(day => `
+        <div class="day-card">
+          <div class="day-header">
+            <span class="day-name">${escapeHtml(day.day)}</span>
+            <span class="day-date">${escapeHtml(day.date)}</span>
+          </div>
+          <div class="meals-list">
+            ${renderMealSlot("Breakfast", day.meals.breakfast)}
+            ${renderMealSlot("Lunch",     day.meals.lunch)}
+            ${renderMealSlot("Dinner",    day.meals.dinner)}
+          </div>
+        </div>`).join("");
+
+      // Shopping list
+      const shoppingEl = document.getElementById("shopping-list");
+      const list = plan.shopping_list || {};
+      const stores = Object.keys(list);
+
+      if (!stores.length) {
+        shoppingEl.innerHTML = `<p style="color:var(--stone);font-size:15px;">No shopping list generated.</p>`;
+      } else {
+        shoppingEl.innerHTML = stores.map(store => {
+          const items = list[store];
+          const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+          return `
+            <div class="store-section">
+              <div class="store-header">
+                <span class="store-header-icon">🏪</span>
+                <span class="store-header-name">${escapeHtml(store)}</span>
+                <span class="store-total">~$${total.toFixed(2)}</span>
+              </div>
+              ${items.map(item => `
+                <div class="shopping-item">
+                  <input type="checkbox" class="shopping-check" onchange="strikeItem(this)" />
+                  <span class="shopping-item-name">${escapeHtml(item.item)}</span>
+                  <span class="shopping-item-qty">${escapeHtml(item.qty || "")}</span>
+                  <span class="shopping-item-price">$${item.price?.toFixed(2) ?? "—"}</span>
+                </div>`).join("")}
+            </div>`;
+        }).join("");
+      }
+
+      showEl("plan-results");
+    }
+
+    function renderMealSlot(label, meal) {
+      if (!meal) return "";
+      const tags = (meal.sale_items || []).map(t =>
+        `<span class="sale-tag">🏷 ${escapeHtml(t)}</span>`).join("");
+      return `
+        <div class="meal-slot ${meal.is_leftover ? "is-leftover" : ""}">
+          <div class="meal-label">
+            ${label}
+            ${meal.is_leftover ? '<span class="leftover-badge">↩ Leftover</span>' : ""}
+          </div>
+          <div class="meal-name">${escapeHtml(meal.name)}</div>
+          ${tags ? `<div class="sale-tags">${tags}</div>` : ""}
+        </div>`;
+    }
+
+    function strikeItem(checkbox) {
+      const nameEl = checkbox.nextElementSibling;
+      nameEl.style.textDecoration = checkbox.checked ? "line-through" : "";
+      nameEl.style.color = checkbox.checked ? "var(--stone)" : "";
+    }
+
+    // --- Sample plan (shown when API returns 501 stub) ---
+    function getSamplePlan() {
+      return {
+        week_of: new Date().toISOString().split("T")[0],
+        bulk_buy_recommendations: [
+          { item: "Campbell's Soup", store: "Lawtons Drugs", price: 1.00, unit: "per can", note: "Stock up — exceptional value, buy 4+" },
+          { item: "Lay's Family Size Chips", store: "Lawtons Drugs", price: 3.50, unit: "per bag (2/$7)", note: "Multi-unit deal — buy both bags" },
+          { item: "Clover Leaf Tuna", store: "Lawtons Drugs", price: 3.47, unit: "each", note: "Pantry staple at a great price" }
+        ],
+        days: [
+          {
+            day: "Monday", date: fmtDate(0),
+            meals: {
+              breakfast: { name: "Peanut Butter Toast with Banana", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
+              lunch:     { name: "Campbell's Tomato Soup with Crackers", sale_items: ["Campbell's Soup", "Christie Crackers"], is_leftover: false },
+              dinner:    { name: "Bacon & Egg Rice Bowl", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: false }
+            }
+          },
+          {
+            day: "Tuesday", date: fmtDate(1),
+            meals: {
+              breakfast: { name: "Peanut Butter Overnight Oats", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
+              lunch:     { name: "Bacon & Egg Rice Bowl", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: true },
+              dinner:    { name: "Tuna Pasta with Lemon", sale_items: ["Clover Leaf Tuna"], is_leftover: false }
+            }
+          },
+          {
+            day: "Wednesday", date: fmtDate(2),
+            meals: {
+              breakfast: { name: "Scrambled Eggs on Toast", sale_items: [], is_leftover: false },
+              lunch:     { name: "Tuna Pasta", sale_items: ["Clover Leaf Tuna"], is_leftover: true },
+              dinner:    { name: "Chunky Soup & Grilled Cheese", sale_items: ["Campbell's Chunky Soup"], is_leftover: false }
+            }
+          },
+          {
+            day: "Thursday", date: fmtDate(3),
+            meals: {
+              breakfast: { name: "Peanut Butter Banana Smoothie", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
+              lunch:     { name: "Tuna & Cracker Plate", sale_items: ["Clover Leaf Tuna", "Christie Crackers"], is_leftover: false },
+              dinner:    { name: "Bacon Fried Rice", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: false }
+            }
+          },
+          {
+            day: "Friday", date: fmtDate(4),
+            meals: {
+              breakfast: { name: "Toast with Peanut Butter & Jam", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
+              lunch:     { name: "Bacon Fried Rice", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: true },
+              dinner:    { name: "Tomato Soup with Grilled Cheese", sale_items: ["Campbell's Soup"], is_leftover: false }
+            }
+          },
+          {
+            day: "Saturday", date: fmtDate(5),
+            meals: {
+              breakfast: { name: "Fluffy Pancakes with Peanut Butter", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
+              lunch:     { name: "Tuna Melt on Crackers", sale_items: ["Clover Leaf Tuna", "Christie Crackers"], is_leftover: false },
+              dinner:    { name: "Bacon, Egg & Potato Hash", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: false }
+            }
+          },
+          {
+            day: "Sunday", date: fmtDate(6),
+            meals: {
+              breakfast: { name: "Bacon & Egg Breakfast Sandwich", sale_items: ["Maple Leaf Natural Selections"], is_leftover: false },
+              lunch:     { name: "Chunky Soup & Crusty Bread", sale_items: ["Campbell's Chunky Soup"], is_leftover: false },
+              dinner:    { name: "Peanut Noodles with Veggies", sale_items: ["Kraft Peanut Butter"], is_leftover: false }
+            }
+          }
+        ],
+        shopping_list: {
+          "Lawtons Drugs": [
+            { item: "Campbell's Soup", qty: "4 cans", price: 1.00 },
+            { item: "Campbell's Chunky Soup", qty: "2 cans", price: 2.00 },
+            { item: "Clover Leaf Tuna", qty: "3 cans", price: 3.47 },
+            { item: "Kraft Peanut Butter", qty: "1 jar", price: 5.99 },
+            { item: "Maple Leaf Ready Crisp Bacon", qty: "2 packs", price: 5.99 },
+            { item: "Maple Leaf Natural Selections", qty: "1 pack", price: 2.49 },
+            { item: "Christie Crackers", qty: "1 box", price: 2.99 },
+            { item: "Lay's Chips (2/$7)", qty: "2 bags", price: 3.50 }
+          ],
+          "Grocery Store": [
+            { item: "Eggs (1 dozen)", qty: "1 carton", price: 4.49 },
+            { item: "Bread (sliced)", qty: "1 loaf", price: 3.49 },
+            { item: "Bananas", qty: "1 bunch", price: 1.49 },
+            { item: "Rice", qty: "2 kg bag", price: 5.99 },
+            { item: "Pasta (spaghetti)", qty: "1 box", price: 1.99 },
+            { item: "Butter", qty: "1 block", price: 5.49 },
+            { item: "Cheddar Cheese", qty: "400g block", price: 6.99 }
+          ]
+        }
+      };
+    }
+
+    function fmtDate(daysFromToday) {
+      const d = new Date();
+      d.setDate(d.getDate() + daysFromToday);
+      return d.toLocaleDateString("en-CA", { month: "short", day: "numeric" });
+    }
+
+    // --- Helpers ---
+    function showEl(id) { document.getElementById(id).style.display = "block"; }
+    function hideEl(id) { document.getElementById(id).style.display = "none"; }
+
+    function escapeHtml(str) {
+      return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    async function logout() {
+      await api.post("/auth/logout", {});
+      window.location.href = "/";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Environment & secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Database
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Uploads / temp files
+backend/uploads/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+
+# Claude
+.claude/

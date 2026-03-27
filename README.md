@@ -1,8 +1,8 @@
-# 🛒 FlyerMeal
+# 🛒 DorothyAnn
 
 > Weekly meal plans built around this week's best grocery deals.
 
-FlyerMeal scans local grocery flyers, extracts sale items, and builds a personalized weekly meal plan — complete with leftover meals, bulk buy alerts, and a store-by-store shopping list.
+DorothyAnn scans local grocery flyers, extracts sale items, and builds a personalized weekly meal plan — complete with leftover meals, bulk buy alerts, and a store-by-store shopping list.
 
 ---
 

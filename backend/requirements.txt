@@ -28,5 +28,8 @@ requests==2.31.0
 # Data handling
 pandas==2.1.4
 
+# Anthropic API (for flyer scanning with Claude)
+anthropic>=0.40.0
+
 # Production server (used by Render)
 gunicorn==21.2.0
