@@ -244,13 +244,27 @@
             </label>
           </div>
         </div>
+        <div class="form-group full-width">
+          <label>Postal Code</label>
+          <input type="text" id="postal-code" placeholder="e.g. B3H 1A1" maxlength="7" style="max-width: 180px;" />
+          <p class="input-hint">Used to suggest nearby stores and find accurate local flyer pricing.</p>
+        </div>
       </div>
+    </div>
+
+    <!-- Suggested Stores (shown when province is known) -->
+    <div class="profile-section" id="suggested-stores-section" style="display: none;">
+      <h2 class="section-title">Stores Near You</h2>
+      <p style="color: var(--stone); font-size: 14px; margin-bottom: 16px;">
+        These stores serve <strong id="province-name"></strong>. Check the ones you want flyers from — DorothyAnn will prioritise them when building your meal plan.
+      </p>
+      <div class="checkbox-grid" id="suggested-stores-grid"></div>
     </div>
 
     <!-- Dietary Restrictions -->
     <div class="profile-section">
       <h2 class="section-title">Dietary Restrictions</h2>
-      <div class="checkbox-grid">
+      <div class="checkbox-grid" id="dietary-restrictions-grid">
         <label class="checkbox-item"><input type="checkbox" value="vegetarian" /> Vegetarian</label>
         <label class="checkbox-item"><input type="checkbox" value="vegan" /> Vegan</label>
         <label class="checkbox-item"><input type="checkbox" value="gluten-free" /> Gluten-Free</label>
@@ -294,9 +308,9 @@
         </div>
 
         <div class="form-group">
-          <label>Preferred Stores</label>
-          <input type="text" id="preferred-stores" placeholder="e.g. No Frills, Costco, FreshCo" />
-          <p class="input-hint">Separate store names with commas. Flyers from these stores are prioritised.</p>
+          <label>Other Stores</label>
+          <input type="text" id="preferred-stores" placeholder="e.g. FreshCo, T&T, Superstore" />
+          <p class="input-hint">Add any stores not listed above, separated by commas.</p>
         </div>
 
         <div class="form-group">
@@ -315,6 +329,8 @@
 
   <script src="../js/api.js"></script>
   <script>
+    let _suggestedStores = [];
+
     // Redirect to home if not logged in
     window.addEventListener("DOMContentLoaded", async () => {
       const user = await api.get("/auth/me");
@@ -330,6 +346,25 @@
       document.getElementById("walk-distance-group").style.display = online ? "none" : "block";
     }
 
+    function renderSuggestedStores(stores, province, preferredStores) {
+      _suggestedStores = stores;
+      document.getElementById("province-name").textContent = province;
+      const grid = document.getElementById("suggested-stores-grid");
+      grid.innerHTML = stores.map(store => `
+        <label class="checkbox-item">
+          <input type="checkbox" value="${store}" ${preferredStores.includes(store) ? "checked" : ""} />
+          ${store}
+        </label>
+      `).join("");
+      document.getElementById("suggested-stores-section").style.display = "block";
+    }
+
+    function getCheckedSuggestedStores() {
+      return [...document.querySelectorAll("#suggested-stores-grid input[type=checkbox]")]
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+    }
+
     async function loadProfile() {
       const data = await api.get("/profile");
       if (data.error) return; // no profile yet, leave defaults
@@ -340,13 +375,27 @@
       document.getElementById("leftover-friendly").checked = data.leftover_friendly ?? true;
       document.getElementById("shop-online").checked = data.shop_online ?? true;
       document.getElementById("max-walk").value = data.max_walk_km ?? 2;
-      document.getElementById("preferred-stores").value = (data.preferred_stores ?? []).join(", ");
       document.getElementById("excluded-stores").value = (data.excluded_stores ?? []).join(", ");
       document.getElementById("disliked-foods").value = (data.disliked_foods ?? []).join(", ");
 
+      if (data.postal_code) {
+        document.getElementById("postal-code").value = data.postal_code;
+      }
+
+      const preferred = data.preferred_stores ?? [];
+
+      if (data.suggested_stores && data.suggested_stores.length > 0 && data.province) {
+        renderSuggestedStores(data.suggested_stores, data.province, preferred);
+        // Show only stores not in the suggested list in the text input
+        const custom = preferred.filter(s => !data.suggested_stores.includes(s));
+        document.getElementById("preferred-stores").value = custom.join(", ");
+      } else {
+        document.getElementById("preferred-stores").value = preferred.join(", ");
+      }
+
       // Tick dietary restriction checkboxes
       const restrictions = data.dietary_restrictions ?? [];
-      document.querySelectorAll(".checkbox-grid input[type=checkbox]").forEach(cb => {
+      document.querySelectorAll("#dietary-restrictions-grid input[type=checkbox]").forEach(cb => {
         cb.checked = restrictions.includes(cb.value);
       });
 
@@ -358,9 +407,13 @@
     }
 
     async function saveProfile() {
-      const restrictions = [...document.querySelectorAll(".checkbox-grid input[type=checkbox]")]
+      const restrictions = [...document.querySelectorAll("#dietary-restrictions-grid input[type=checkbox]")]
         .filter(cb => cb.checked)
         .map(cb => cb.value);
+
+      const checkedSuggested = getCheckedSuggestedStores();
+      const customStores = splitTags(document.getElementById("preferred-stores").value);
+      const preferred = [...new Set([...checkedSuggested, ...customStores])];
 
       const payload = {
         household_size: parseInt(document.getElementById("household-size").value) || 1,
@@ -369,7 +422,8 @@
         leftover_friendly: document.getElementById("leftover-friendly").checked,
         shop_online: document.getElementById("shop-online").checked,
         max_walk_km: parseFloat(document.getElementById("max-walk").value) || 2,
-        preferred_stores: splitTags(document.getElementById("preferred-stores").value),
+        postal_code: document.getElementById("postal-code").value.trim() || null,
+        preferred_stores: preferred,
         excluded_stores: splitTags(document.getElementById("excluded-stores").value),
         disliked_foods: splitTags(document.getElementById("disliked-foods").value),
         dietary_restrictions: restrictions,
@@ -383,6 +437,12 @@
         statusEl.className = "error-msg";
         statusEl.textContent = data.error;
       } else {
+        // Show suggested stores if returned (new postal code or province changed)
+        if (data.suggested_stores && data.suggested_stores.length > 0 && data.province) {
+          renderSuggestedStores(data.suggested_stores, data.province, preferred);
+          const custom = preferred.filter(s => !data.suggested_stores.includes(s));
+          document.getElementById("preferred-stores").value = custom.join(", ");
+        }
         statusEl.className = "success-msg";
         statusEl.textContent = "Profile saved!";
         setTimeout(() => statusEl.classList.add("hidden"), 3000);

@@ -447,90 +447,89 @@
 
   <script src="../js/api.js"></script>
   <script>
-    let loadingTimer = null;
-
     window.addEventListener("DOMContentLoaded", async () => {
       const user = await api.get("/auth/me");
       if (!user.id) { window.location.href = "/"; return; }
 
-      const flyers = await api.get("/flyers");
-      if (!Array.isArray(flyers) || flyers.length === 0) {
-        document.getElementById("generate-btn").disabled = true;
-      } else {
+      // Load any previously saved meal plan
+      const saved = await api.get("/meal-plan");
+      if (saved && !saved.error) {
         hideEl("plan-empty");
+        renderPlan(saved);
       }
     });
 
-    // --- Animated loading steps ---
-    function startLoadingAnimation() {
-      const steps = ["step-1","step-2","step-3","step-4","step-5"];
-      let i = 0;
-      loadingTimer = setInterval(() => {
-        if (i > 0) document.getElementById(steps[i-1])?.classList.replace("active","done");
-        if (i < steps.length) document.getElementById(steps[i])?.classList.add("active");
-        i++;
-        if (i >= steps.length) clearInterval(loadingTimer);
-      }, 5000);
-    }
-
-    function stopLoadingAnimation() {
-      clearInterval(loadingTimer);
+    // --- Drive loading steps from SSE progress events ---
+    function setStep(n) {
+      ["step-1","step-2","step-3","step-4","step-5"].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (i + 1 < n)       el.className = "done";
+        else if (i + 1 === n) el.className = "active";
+        else                  el.className = "";
+      });
     }
 
     // --- Generate ---
-    async function generatePlan() {
+    function generatePlan() {
       const btn = document.getElementById("generate-btn");
       btn.disabled = true;
       btn.textContent = "Generating…";
 
-      // Reset loading steps
-      ["step-1","step-2","step-3","step-4","step-5"].forEach(id => {
-        const el = document.getElementById(id);
-        el.className = "";
-      });
-
+      setStep(1);
       showEl("plan-loading");
       hideEl("plan-empty");
       hideEl("plan-results");
-      startLoadingAnimation();
 
-      try {
-        const data = await api.get("/meal-plan");
-        stopLoadingAnimation();
-        hideEl("plan-loading");
+      const url = API_BASE + "/meal-plan/generate";
+      const es = new EventSource(url, { withCredentials: true });
 
-        if (data.error) {
+      es.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "progress") {
+          setStep(data.step);
+          // Update the matching step label text
+          const el = document.getElementById(`step-${data.step}`);
+          if (el) el.textContent = data.message;
+
+        } else if (data.type === "complete") {
+          es.close();
+          hideEl("plan-loading");
+          renderPlan(data.plan);
+          btn.disabled = false;
+          btn.textContent = "✨ Regenerate";
+
+        } else if (data.type === "error") {
+          es.close();
+          hideEl("plan-loading");
           showEl("plan-empty");
-          alert("Could not generate meal plan: " + data.error);
-          return;
+          alert(data.message);
+          btn.disabled = false;
+          btn.textContent = "✨ Generate Meal Plan";
         }
+      };
 
-        // API returns 501 stub — use sample data for preview
-        const plan = (data.message && data.message.includes("coming")) ? getSamplePlan() : data;
-        renderPlan(plan);
-
-      } catch (err) {
-        stopLoadingAnimation();
+      es.onerror = () => {
+        es.close();
         hideEl("plan-loading");
         showEl("plan-empty");
-        alert("Could not connect to the server.");
-      }
-
-      btn.disabled = false;
-      btn.textContent = "✨ Regenerate";
+        alert("Lost connection to the server. Please try again.");
+        btn.disabled = false;
+        btn.textContent = "✨ Generate Meal Plan";
+      };
     }
 
     // --- Render ---
     function renderPlan(plan) {
       // Bulk buy alerts
       const alertsEl = document.getElementById("bulk-alerts");
-      const bulkRecs = plan.bulk_buy_recommendations || [];
-      if (bulkRecs.length) {
+      const bulkAlerts = plan.bulk_buy_alerts || [];
+      if (bulkAlerts.length) {
         alertsEl.innerHTML = `
           <div style="font-family:var(--font-display);font-size:20px;color:var(--bark);margin-bottom:12px;">
             🏷️ Bulk Buy Opportunities This Week
           </div>
-          ${bulkRecs.map(r => `
+          ${bulkAlerts.map(r => `
             <div class="bulk-alert">
               <div class="bulk-alert-icon">📦</div>
               <div class="bulk-alert-body">
@@ -539,8 +538,7 @@
                 <div class="bulk-alert-store">@ ${escapeHtml(r.store)}</div>
               </div>
               <div style="text-align:right;">
-                <div class="bulk-alert-price">$${r.price}</div>
-                <div class="bulk-alert-store">${escapeHtml(r.unit || "")}</div>
+                <div class="bulk-alert-price">${escapeHtml(String(r.price))}</div>
               </div>
             </div>`).join("")}`;
       } else {
@@ -549,7 +547,7 @@
 
       // Week label
       if (plan.week_of) {
-        const d = new Date(plan.week_of);
+        const d = new Date(plan.week_of + "T12:00:00");
         document.getElementById("week-label").textContent =
           `Week of ${d.toLocaleDateString("en-CA", {month:"long", day:"numeric", year:"numeric"})}`;
       }
@@ -560,7 +558,6 @@
         <div class="day-card">
           <div class="day-header">
             <span class="day-name">${escapeHtml(day.day)}</span>
-            <span class="day-date">${escapeHtml(day.date)}</span>
           </div>
           <div class="meals-list">
             ${renderMealSlot("Breakfast", day.meals.breakfast)}
@@ -569,30 +566,29 @@
           </div>
         </div>`).join("");
 
-      // Shopping list
+      // Shopping list — API returns array of {store, items}
       const shoppingEl = document.getElementById("shopping-list");
-      const list = plan.shopping_list || {};
-      const stores = Object.keys(list);
+      const storeList = plan.shopping_list || [];
 
-      if (!stores.length) {
+      if (!storeList.length) {
         shoppingEl.innerHTML = `<p style="color:var(--stone);font-size:15px;">No shopping list generated.</p>`;
       } else {
-        shoppingEl.innerHTML = stores.map(store => {
-          const items = list[store];
-          const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+        shoppingEl.innerHTML = storeList.map(section => {
+          const items = section.items || [];
+          const total = items.reduce((sum, i) => sum + (typeof i.price === "number" ? i.price : 0), 0);
           return `
             <div class="store-section">
               <div class="store-header">
                 <span class="store-header-icon">🏪</span>
-                <span class="store-header-name">${escapeHtml(store)}</span>
-                <span class="store-total">~$${total.toFixed(2)}</span>
+                <span class="store-header-name">${escapeHtml(section.store)}</span>
+                ${total > 0 ? `<span class="store-total">~$${total.toFixed(2)}</span>` : ""}
               </div>
               ${items.map(item => `
                 <div class="shopping-item">
                   <input type="checkbox" class="shopping-check" onchange="strikeItem(this)" />
-                  <span class="shopping-item-name">${escapeHtml(item.item)}</span>
-                  <span class="shopping-item-qty">${escapeHtml(item.qty || "")}</span>
-                  <span class="shopping-item-price">$${item.price?.toFixed(2) ?? "—"}</span>
+                  <span class="shopping-item-name">${escapeHtml(item.name)}</span>
+                  <span class="shopping-item-qty">${escapeHtml(item.unit || "")}</span>
+                  <span class="shopping-item-price">${typeof item.price === "number" ? "$" + item.price.toFixed(2) : "—"}</span>
                 </div>`).join("")}
             </div>`;
         }).join("");
@@ -603,13 +599,14 @@
 
     function renderMealSlot(label, meal) {
       if (!meal) return "";
+      const isLeftover = meal.leftover || meal.is_leftover;
       const tags = (meal.sale_items || []).map(t =>
         `<span class="sale-tag">🏷 ${escapeHtml(t)}</span>`).join("");
       return `
-        <div class="meal-slot ${meal.is_leftover ? "is-leftover" : ""}">
+        <div class="meal-slot ${isLeftover ? "is-leftover" : ""}">
           <div class="meal-label">
             ${label}
-            ${meal.is_leftover ? '<span class="leftover-badge">↩ Leftover</span>' : ""}
+            ${isLeftover ? '<span class="leftover-badge">↩ Leftover</span>' : ""}
           </div>
           <div class="meal-name">${escapeHtml(meal.name)}</div>
           ${tags ? `<div class="sale-tags">${tags}</div>` : ""}
@@ -620,103 +617,6 @@
       const nameEl = checkbox.nextElementSibling;
       nameEl.style.textDecoration = checkbox.checked ? "line-through" : "";
       nameEl.style.color = checkbox.checked ? "var(--stone)" : "";
-    }
-
-    // --- Sample plan (shown when API returns 501 stub) ---
-    function getSamplePlan() {
-      return {
-        week_of: new Date().toISOString().split("T")[0],
-        bulk_buy_recommendations: [
-          { item: "Campbell's Soup", store: "Lawtons Drugs", price: 1.00, unit: "per can", note: "Stock up — exceptional value, buy 4+" },
-          { item: "Lay's Family Size Chips", store: "Lawtons Drugs", price: 3.50, unit: "per bag (2/$7)", note: "Multi-unit deal — buy both bags" },
-          { item: "Clover Leaf Tuna", store: "Lawtons Drugs", price: 3.47, unit: "each", note: "Pantry staple at a great price" }
-        ],
-        days: [
-          {
-            day: "Monday", date: fmtDate(0),
-            meals: {
-              breakfast: { name: "Peanut Butter Toast with Banana", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
-              lunch:     { name: "Campbell's Tomato Soup with Crackers", sale_items: ["Campbell's Soup", "Christie Crackers"], is_leftover: false },
-              dinner:    { name: "Bacon & Egg Rice Bowl", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: false }
-            }
-          },
-          {
-            day: "Tuesday", date: fmtDate(1),
-            meals: {
-              breakfast: { name: "Peanut Butter Overnight Oats", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
-              lunch:     { name: "Bacon & Egg Rice Bowl", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: true },
-              dinner:    { name: "Tuna Pasta with Lemon", sale_items: ["Clover Leaf Tuna"], is_leftover: false }
-            }
-          },
-          {
-            day: "Wednesday", date: fmtDate(2),
-            meals: {
-              breakfast: { name: "Scrambled Eggs on Toast", sale_items: [], is_leftover: false },
-              lunch:     { name: "Tuna Pasta", sale_items: ["Clover Leaf Tuna"], is_leftover: true },
-              dinner:    { name: "Chunky Soup & Grilled Cheese", sale_items: ["Campbell's Chunky Soup"], is_leftover: false }
-            }
-          },
-          {
-            day: "Thursday", date: fmtDate(3),
-            meals: {
-              breakfast: { name: "Peanut Butter Banana Smoothie", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
-              lunch:     { name: "Tuna & Cracker Plate", sale_items: ["Clover Leaf Tuna", "Christie Crackers"], is_leftover: false },
-              dinner:    { name: "Bacon Fried Rice", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: false }
-            }
-          },
-          {
-            day: "Friday", date: fmtDate(4),
-            meals: {
-              breakfast: { name: "Toast with Peanut Butter & Jam", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
-              lunch:     { name: "Bacon Fried Rice", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: true },
-              dinner:    { name: "Tomato Soup with Grilled Cheese", sale_items: ["Campbell's Soup"], is_leftover: false }
-            }
-          },
-          {
-            day: "Saturday", date: fmtDate(5),
-            meals: {
-              breakfast: { name: "Fluffy Pancakes with Peanut Butter", sale_items: ["Kraft Peanut Butter"], is_leftover: false },
-              lunch:     { name: "Tuna Melt on Crackers", sale_items: ["Clover Leaf Tuna", "Christie Crackers"], is_leftover: false },
-              dinner:    { name: "Bacon, Egg & Potato Hash", sale_items: ["Maple Leaf Ready Crisp Bacon"], is_leftover: false }
-            }
-          },
-          {
-            day: "Sunday", date: fmtDate(6),
-            meals: {
-              breakfast: { name: "Bacon & Egg Breakfast Sandwich", sale_items: ["Maple Leaf Natural Selections"], is_leftover: false },
-              lunch:     { name: "Chunky Soup & Crusty Bread", sale_items: ["Campbell's Chunky Soup"], is_leftover: false },
-              dinner:    { name: "Peanut Noodles with Veggies", sale_items: ["Kraft Peanut Butter"], is_leftover: false }
-            }
-          }
-        ],
-        shopping_list: {
-          "Lawtons Drugs": [
-            { item: "Campbell's Soup", qty: "4 cans", price: 1.00 },
-            { item: "Campbell's Chunky Soup", qty: "2 cans", price: 2.00 },
-            { item: "Clover Leaf Tuna", qty: "3 cans", price: 3.47 },
-            { item: "Kraft Peanut Butter", qty: "1 jar", price: 5.99 },
-            { item: "Maple Leaf Ready Crisp Bacon", qty: "2 packs", price: 5.99 },
-            { item: "Maple Leaf Natural Selections", qty: "1 pack", price: 2.49 },
-            { item: "Christie Crackers", qty: "1 box", price: 2.99 },
-            { item: "Lay's Chips (2/$7)", qty: "2 bags", price: 3.50 }
-          ],
-          "Grocery Store": [
-            { item: "Eggs (1 dozen)", qty: "1 carton", price: 4.49 },
-            { item: "Bread (sliced)", qty: "1 loaf", price: 3.49 },
-            { item: "Bananas", qty: "1 bunch", price: 1.49 },
-            { item: "Rice", qty: "2 kg bag", price: 5.99 },
-            { item: "Pasta (spaghetti)", qty: "1 box", price: 1.99 },
-            { item: "Butter", qty: "1 block", price: 5.49 },
-            { item: "Cheddar Cheese", qty: "400g block", price: 6.99 }
-          ]
-        }
-      };
-    }
-
-    function fmtDate(daysFromToday) {
-      const d = new Date();
-      d.setDate(d.getDate() + daysFromToday);
-      return d.toLocaleDateString("en-CA", { month: "short", day: "numeric" });
     }
 
     // --- Helpers ---

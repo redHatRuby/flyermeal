@@ -18,10 +18,15 @@ function showAuthScreen() {
   document.getElementById("dashboard-screen").classList.add("hidden");
 }
 
-function showDashboard(user) {
+async function showDashboard(user) {
   document.getElementById("auth-screen").classList.add("hidden");
   document.getElementById("dashboard-screen").classList.remove("hidden");
   document.getElementById("user-name").textContent = user.name || user.email.split("@")[0];
+
+  const profile = await api.get("/profile");
+  if (!profile.error) {
+    document.getElementById("setup-prompt").classList.add("hidden");
+  }
 }
 
 function showTab(tab) {

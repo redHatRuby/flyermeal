@@ -585,7 +585,7 @@
             <div class="flyer-store-icon">🏪</div>
             <div class="flyer-info">
               <div class="flyer-store-name">${escapeHtml(s.store)} ${bulkBadge}</div>
-              <div class="flyer-meta">Scanned ${date}${s.flyer_date ? " · " + escapeHtml(s.flyer_date) : ""}</div>
+              <div class="flyer-meta">Scanned ${date}${s.flyer_date ? " · " + escapeHtml(s.flyer_date) : ""}${s.source_url ? " · Web" : ""}</div>
             </div>
             <div class="flyer-stats">
               <div class="flyer-stat">
@@ -665,7 +665,7 @@
         <div class="modal-header">
           <div class="modal-header-info">
             <h2>${escapeHtml(scan.store)}</h2>
-            <p>${scan.flyer_date ? escapeHtml(scan.flyer_date) + " · " : ""}Scanned ${scannedDate}</p>
+            <p>${scan.flyer_date ? escapeHtml(scan.flyer_date) + " · " : ""}Scanned ${scannedDate}${scan.source_url ? ` · <a href="${escapeHtml(scan.source_url)}" target="_blank" rel="noopener" style="color:var(--moss);">View source</a>` : ""}</p>
           </div>
           <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
